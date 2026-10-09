@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GO-AI Annotation Practice Studio | Amazon Robotics Portfolio</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <span class="brand-badge">GO-AI</span>
+      <h1>Annotation Practice Studio</h1>
+      <span class="role-tag">Associate, ML Data Operations</span>
+    </div>
+
+    <!-- View Switcher Tabs -->
+    <nav class="nav-tabs">
+      <button id="tab-studio-btn" class="nav-tab-btn active">🎯 Annotation Studio</button>
+      <button id="tab-dashboard-btn" class="nav-tab-btn">📊 QA Dashboard</button>
+      <button id="tab-guidelines-btn" class="nav-tab-btn">📖 Guidelines SOP</button>
+    </nav>
+
+    <div class="nav-actions">
+      <button id="tour-btn" class="btn btn-outline btn-sm" title="Interactive Walkthrough">💡 Guided Tour</button>
+      <button id="shortcuts-btn" class="btn btn-outline btn-sm" title="Keyboard Shortcuts">⌨️ Shortcuts</button>
+      <button id="theme-toggle-btn" class="btn btn-outline btn-sm">☀️ Light</button>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="app-main" id="app-container">
+
+    <!-- VIEW 1: ANNOTATION STUDIO -->
+    <div id="view-studio" class="view-container">
+      <div class="studio-grid">
+
+        <!-- 1. LEFT SIDEBAR: TASK QUEUE -->
+        <aside class="sidebar-queue">
+          <div class="sidebar-header">
+            <h3>Task Queue</h3>
+            <p class="sidebar-subtitle">Fulfillment Center Inbound & Outbound</p>
+          </div>
+
+          <div class="task-list-scroll" id="task-list-container">
+            <!-- Dynamically populated tasks 1-8 -->
+          </div>
+
+          <div class="sidebar-footer">
+            <input type="file" id="upload-image-input" accept="image/*" class="hidden">
+            <button id="upload-image-btn" class="btn btn-outline full-width">
+              📁 Upload Custom Image
+            </button>
+          </div>
+        </aside>
+
+        <!-- 2. CENTER WORKSPACE: CANVAS & CONTROLS -->
+        <section class="canvas-panel">
+          
+          <!-- Task Metadata & Timer Header -->
+          <div class="task-header-bar">
+            <div class="task-header-left">
+              <div class="task-title-row">
+                <h2 id="task-title-header">Task 1: Packing Station Infeed</h2>
+                <span id="task-category-badge" class="badge-cat">Packaging & Infeed</span>
+                <span id="task-difficulty-badge" class="badge-diff easy">Easy</span>
+              </div>
+              <p id="task-description-text" class="task-desc">
+                Annotate all outbound packages resting on the packing table.
+              </p>
+            </div>
+
+            <div class="timer-box" title="Auto-pauses when tab is inactive">
+              <span class="timer-icon">⏱️</span>
+              <span id="task-timer-display" class="timer-val">00:00</span>
+            </div>
+          </div>
+
+          <!-- Annotation Toolbar -->
+          <div class="canvas-toolbar">
+            <div class="tool-group">
+              <button id="tool-draw-btn" class="tool-btn active" title="Draw bounding box (D)">
+                <span>✏️</span> Draw Box [D]
+              </button>
+              <button id="tool-select-btn" class="tool-btn" title="Select / Move / Resize box (S)">
+                <span>✋</span> Select / Move [S]
+              </button>
+              <button id="tool-undo-btn" class="tool-btn" title="Undo (Ctrl+Z)">
+                <span>↩️</span> Undo
+              </button>
+              <button id="tool-redo-btn" class="tool-btn" title="Redo (Ctrl+Y)">
+                <span>↪️</span> Redo
+              </button>
+              <button id="tool-clear-btn" class="tool-btn" title="Clear all boxes">
+                <span>🗑️</span> Clear
+              </button>
+            </div>
+
+            <div class="tool-hint">
+              <span>💡 Tip: Press <strong>1–6</strong> to assign label to selected box</span>
+            </div>
+          </div>
+
+          <!-- Review Controls Bar (Visible upon submission or in review) -->
+          <div id="review-controls-bar" class="review-controls-bar hidden">
+            <span>🔍 Ground Truth Audit Overlay Active</span>
+            <div class="review-toggles">
+              <label class="chk-label">
+                <input type="checkbox" id="toggle-gt-checkbox" checked>
+                <span>Ground Truth (Green Dashed)</span>
+              </label>
+              <label class="chk-label">
+                <input type="checkbox" id="toggle-user-checkbox" checked>
+                <span>User Boxes (Blue)</span>
+              </label>
+              <label class="chk-label">
+                <input type="checkbox" id="toggle-errors-checkbox" checked>
+                <span>Error Flags (Red)</span>
+              </label>
+            </div>
+            <button id="exit-review-btn" class="btn btn-outline btn-sm">Exit Review</button>
+          </div>
+
+          <!-- Canvas Viewport -->
+          <div class="canvas-viewport">
+            <div class="canvas-stage">
+              <!-- Background Scene Canvas -->
+              <canvas id="main-scene-canvas" width="800" height="550"></canvas>
+              <!-- Bounding Box Annotation Layer -->
+              <canvas id="overlay-canvas" width="800" height="550"></canvas>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- 3. RIGHT PANEL: INSPECTOR & SCORING -->
+        <aside class="sidebar-inspector">
+          
+          <!-- Box Properties Inspector -->
+          <div class="inspector-section">
+            <div class="section-header">
+              <h4>Box Inspector</h4>
+            </div>
+
+            <div id="inspector-empty-state" class="empty-inspector-note">
+              Select or draw a bounding box on the canvas to edit its label and quality attributes.
+            </div>
+
+            <div id="inspector-active-box" class="hidden">
+              <div class="form-group">
+                <label for="box-label-select">Object Label (Hotkeys 1–6)</label>
+                <select id="box-label-select" class="form-select">
+                  <option value="Cardboard Box">1: Cardboard Box</option>
+                  <option value="Polybag">2: Polybag</option>
+                  <option value="Envelope">3: Envelope</option>
+                  <option value="Tote">4: Tote</option>
+                  <option value="Pallet">5: Pallet</option>
+                  <option value="Damaged Package">6: Damaged Package</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Quality Attributes</label>
+                <div class="attr-checkboxes">
+                  <label class="chk-label">
+                    <input type="checkbox" id="attr-occluded">
+                    <span>Occluded (partially hidden)</span>
+                  </label>
+                  <label class="chk-label">
+                    <input type="checkbox" id="attr-truncated">
+                    <span>Truncated (cut off at edge)</span>
+                  </label>
+                  <label class="chk-label">
+                    <input type="checkbox" id="attr-damaged">
+                    <span>Damaged / Structural Crush</span>
+                  </label>
+                </div>
+              </div>
+
+              <div id="box-coords-display" class="coords-badge">
+                X: 0px Y: 0px W: 0px H: 0px
+              </div>
+
+              <button id="delete-box-btn" class="btn btn-danger-outline btn-sm full-width">
+                🗑️ Delete Selected Box (Del)
+              </button>
+            </div>
+          </div>
+
+          <!-- Box List -->
+          <div class="inspector-section">
+            <div class="section-header">
+              <h4>Boxes on Canvas</h4>
+              <span id="box-count-badge" class="badge-cat">0</span>
+            </div>
+            <div id="box-list-container" class="box-list-scroll">
+              <!-- Dynamically populated list of boxes -->
+            </div>
+          </div>
+
+          <!-- Submission & Scoring Card -->
+          <div class="submit-section">
+            <button id="submit-task-btn" class="btn-submit">
+              🚀 Submit & Audit Task (Enter)
+            </button>
+
+            <!-- Dynamic Evaluation Card -->
+            <div id="score-results-card" class="score-card hidden">
+              <!-- Dynamically populated upon evaluation -->
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+    </div>
+
+    <!-- VIEW 2: PERFORMANCE DASHBOARD -->
+    <div id="view-dashboard" class="view-container hidden">
+      <!-- Dynamically rendered via DashboardModule.renderDashboard -->
+    </div>
+
+    <!-- VIEW 3: GUIDELINES SOP -->
+    <div id="view-guidelines" class="view-container hidden">
+      <!-- Dynamically rendered via app.js with ANNOTATION_GUIDELINES -->
+    </div>
+
+  </main>
+
+  <!-- Keyboard Shortcuts Modal -->
+  <div id="shortcuts-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>⌨️ Keyboard Shortcuts & Controls</h3>
+        <button id="close-shortcuts-modal" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="shortcut-row">
+          <span>Assign Cardboard Box</span>
+          <span class="kbd">1</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Assign Polybag</span>
+          <span class="kbd">2</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Assign Envelope</span>
+          <span class="kbd">3</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Assign Tote Bin</span>
+          <span class="kbd">4</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Assign Pallet</span>
+          <span class="kbd">5</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Assign Damaged Package</span>
+          <span class="kbd">6</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Delete Selected Box</span>
+          <span class="kbd">Delete / Backspace</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Undo Action</span>
+          <span class="kbd">Ctrl + Z</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Redo Action</span>
+          <span class="kbd">Ctrl + Y / Ctrl+Shift+Z</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Submit & Audit Task</span>
+          <span class="kbd">Enter</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Switch to Draw Mode</span>
+          <span class="kbd">D</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Switch to Select/Move Mode</span>
+          <span class="kbd">S</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Guided Tour Modal -->
+  <div id="tour-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 560px;">
+      <div class="modal-header">
+        <h3>💡 GO-AI Studio Guided Walkthrough</h3>
+        <button id="close-tour-modal" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex; flex-direction:column; gap:14px; font-size:13px; color:var(--text-secondary);">
+        <div style="background:var(--bg-tertiary); padding:12px; border-radius:6px; border-left:4px solid var(--accent-amazon);">
+          <strong style="color:var(--text-primary); display:block; margin-bottom:2px;">1. Task Queue (Left Sidebar)</strong>
+          Select any of the 8 simulated fulfillment center tasks (infeed tables, sortation chutes, mobile stow pods) or upload your own image.
+        </div>
+        <div style="background:var(--bg-tertiary); padding:12px; border-radius:6px; border-left:4px solid var(--accent-blue);">
+          <strong style="color:var(--text-primary); display:block; margin-bottom:2px;">2. Annotation Canvas (Center)</strong>
+          Click and drag with your mouse (or touchscreen) to enclose items. Use hotkeys <strong>1 to 6</strong> to rapidly set package labels.
+        </div>
+        <div style="background:var(--bg-tertiary); padding:12px; border-radius:6px; border-left:4px solid var(--status-warning);">
+          <strong style="color:var(--text-primary); display:block; margin-bottom:2px;">3. Quality Attributes & Review (Right)</strong>
+          Mark checkboxes for <em>Occluded</em> (partially hidden), <em>Truncated</em> (frame edge), or <em>Damaged</em>. Press <strong>Enter</strong> to submit.
+        </div>
+        <div style="background:var(--bg-tertiary); padding:12px; border-radius:6px; border-left:4px solid var(--status-success);">
+          <strong style="color:var(--text-primary); display:block; margin-bottom:2px;">4. IoU Automated Audit & Analytics</strong>
+          Get instant quality scoring against mathematical ground truth. Visit <strong>QA Dashboard</strong> to see trend charts, error distributions, and export official audit reports.
+        </div>
+        <button id="tour-start-btn" class="btn btn-submit" style="margin-top:6px;">🚀 Start Practice Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/ground_truth_data.js"></script>
+  <script src="js/guidelines.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/scoring.js"></script>
+  <script src="js/canvas.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
